@@ -126,8 +126,8 @@ The dataset is sourced from the LAPD's publicly available records: [LAPD Crime D
   
 
 ```bash
-git  clone  https://github.com/TomusD/la-crime-database.git
-cd  la-crime-database
+git  clone  https://github.com/TomusD/la-crime.git
+cd  la-crime
 ```
 
   
