@@ -1,0 +1,619 @@
+/////////////////////////////////////////////////////////////////// query 1
+
+SELECT 
+    cc.crm_cd AS crime_code, 
+    cc.crm_cd_desc AS crime_description,
+    COUNT(cr.dr_no_id) AS total_reports
+FROM crime_app_api_crimereport cr
+JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+JOIN crime_app_api_crimecode cc ON cc.crm_cd = crc.crm_cd_1_id
+WHERE cd.time_occ BETWEEN '00:10:00' AND '00:30:00'
+GROUP BY cc.crm_cd, cc.crm_cd_desc
+ORDER BY total_reports DESC;
+
+
+////////////////////////////////////////////////////////////////// query 2
+
+SELECT cd.date_rptd AS report_date, 
+COUNT(cr.dr_no_id) AS total_reports
+FROM crime_app_api_crimereport cr
+JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+WHERE cd.date_rptd = '2020-12-31'
+  AND cd.time_occ BETWEEN '00:00:00' AND '23:59:59'
+  AND crc.crm_cd_1_id = '624'
+GROUP BY cd.date_rptd
+ORDER BY report_date;
+
+
+///////////////////////////////////////////////////////////////// query 3
+
+SELECT 
+    a.area_name,
+    cc.crm_cd AS crime_code,
+    cc.crm_cd_desc AS crime_description,
+    COUNT(*) AS crime_count
+FROM crime_app_api_crimereport cr
+JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+JOIN crime_app_api_area a ON cr.area_id = a.area_id
+JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+JOIN crime_app_api_crimecode cc ON 
+    cc.crm_cd = crc.crm_cd_1_id OR 
+    cc.crm_cd = crc.crm_cd_2_id OR 
+    cc.crm_cd = crc.crm_cd_3_id OR 
+    cc.crm_cd = crc.crm_cd_4_id
+WHERE cd.date_occ = '2020-01-02'
+GROUP BY a.area_name, cc.crm_cd, cc.crm_cd_desc
+ORDER BY a.area_name, crime_count DESC;
+
+
+//////////////////////////////////////////////////////////////// query 4
+
+
+SELECT 
+    EXTRACT(HOUR FROM cd.time_occ) AS hour,
+    COUNT(cd.dr_no_id) / COUNT(DISTINCT cd.date_occ)::float AS average_crimes_per_hour
+FROM crime_app_api_crimedate cd
+WHERE cd.date_occ BETWEEN '2020-01-01' AND '2020-01-05'
+GROUP BY hour
+ORDER BY hour;
+
+
+////////////////////////////////////////////////////////////// query 5
+
+SELECT 
+    cc.crm_cd AS crime_code,
+    cc.crm_cd_desc AS crime_description,
+    COUNT(*) AS crime_count
+FROM crime_app_api_crimereport cr
+JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+JOIN crime_app_api_crimecode cc ON 
+    cc.crm_cd = crc.crm_cd_1_id OR 
+    cc.crm_cd = crc.crm_cd_2_id OR 
+    cc.crm_cd = crc.crm_cd_3_id OR 
+    cc.crm_cd = crc.crm_cd_4_id
+JOIN crime_app_api_location loc ON cr.location_id = loc.location_id
+WHERE cd.date_occ = '2020-01-02'
+  AND loc.lat >= 0 AND loc.lat <= 34.19940000
+  AND loc.lon >= -118.48370000 AND loc.lon <= 0
+GROUP BY cc.crm_cd, cc.crm_cd_desc 
+ORDER BY crime_count DESC
+LIMIT 1;
+
+
+///////////////////////////////////////////////////////////// query 6
+////////////////////////////////////// For AREA NAME
+
+SELECT 
+    a.area_name,
+    COUNT(cr.dr_no_id) AS total_crimes
+FROM crime_app_api_crimereport cr
+JOIN crime_app_api_area a ON cr.area_id = a.area_id
+JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+WHERE cd.date_rptd BETWEEN '2020-04-28' AND '2020-05-01'
+GROUP BY a.area_name
+ORDER BY total_crimes DESC
+LIMIT 5;
+
+////////////////////////////////// For Rpt Dist No
+
+SELECT 
+    r.rpt_dist_no AS reported_district_number,
+    COUNT(cr.dr_no_id) AS total_crimes
+FROM crime_app_api_crimereport cr
+JOIN crime_app_api_reportdistrict r ON cr.report_dist_id = r.report_dist_id
+JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+WHERE cd.date_rptd BETWEEN '2023-04-04' AND '2023-04-09'
+GROUP BY r.rpt_dist_no
+ORDER BY total_crimes DESC
+LIMIT 5;
+
+
+/////////////////////////////////////////////////////////// query 7
+
+WITH MostReportedArea AS (
+    SELECT 
+        cr.area_id AS area_id,
+        COUNT(*) AS total_reports
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    WHERE cd.date_rptd BETWEEN '2020-01-01' AND '2023-01-01'
+    GROUP BY cr.area_id
+    ORDER BY total_reports DESC
+    LIMIT 1
+),
+
+CrimeCodes AS (
+    SELECT 
+        cr.dr_no_id,
+        crc.crm_cd_1_id AS crime_code
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    WHERE cr.area_id = (SELECT area_id FROM MostReportedArea)
+      AND cd.date_occ BETWEEN '2020-01-01' AND '2023-01-01'
+
+    UNION ALL
+
+    SELECT 
+        cr.dr_no_id,
+        crc.crm_cd_2_id AS crime_code
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    WHERE cr.area_id = (SELECT area_id FROM MostReportedArea)
+      AND cd.date_occ BETWEEN '2020-01-01' AND '2023-01-01'
+      AND crc.crm_cd_2_id IS NOT NULL
+
+    UNION ALL
+
+    SELECT 
+        cr.dr_no_id,
+        crc.crm_cd_3_id AS crime_code
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    WHERE cr.area_id = (SELECT area_id FROM MostReportedArea)
+      AND cd.date_occ BETWEEN '2020-01-01' AND '2023-01-01'
+      AND crc.crm_cd_3_id IS NOT NULL
+
+    UNION ALL
+
+    SELECT 
+        cr.dr_no_id,
+        crc.crm_cd_4_id AS crime_code
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    WHERE cr.area_id = (SELECT area_id FROM MostReportedArea)
+      AND cd.date_occ BETWEEN '2020-01-01' AND '2023-01-01'
+      AND crc.crm_cd_4_id IS NOT NULL
+),
+
+CrimeCodePairs AS (
+    SELECT
+        c1.crime_code AS crime_code_1,
+        c2.crime_code AS crime_code_2
+    FROM CrimeCodes c1
+    JOIN CrimeCodes c2 ON c1.dr_no_id = c2.dr_no_id
+    WHERE c1.crime_code < c2.crime_code
+),
+
+CrimeCodePairCounts AS (
+    SELECT 
+        LEAST(crime_code_1, crime_code_2) AS crime_code_1,
+        GREATEST(crime_code_1, crime_code_2) AS crime_code_2,
+        COUNT(*) AS occurrence_count
+    FROM CrimeCodePairs
+    GROUP BY LEAST(crime_code_1, crime_code_2), GREATEST(crime_code_1, crime_code_2)
+)
+
+SELECT 
+    cpc.crime_code_1,
+    cc1.crm_cd_desc AS crime_code_1_description,
+    cpc.crime_code_2,
+    cc2.crm_cd_desc AS crime_code_2_description,
+    cpc.occurrence_count
+FROM CrimeCodePairCounts cpc
+JOIN crime_app_api_crimecode cc1 ON cpc.crime_code_1 = cc1.crm_cd
+JOIN crime_app_api_crimecode cc2 ON cpc.crime_code_2 = cc2.crm_cd
+ORDER BY cpc.occurrence_count DESC
+LIMIT 1;
+
+
+/////////////////////////////////////////////////////////// query 8
+
+WITH GivenCrimeIncidents AS (
+    SELECT 
+        cr.dr_no_id
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    WHERE crc.crm_cd_1_id = '812'
+      AND cd.date_occ BETWEEN '2020-01-01' AND '2020-01-01'
+),
+
+CoOccurringCrimes AS (
+    SELECT 
+        crc.crm_cd_2_id AS crime_code
+    FROM crime_app_api_crimereportcode crc
+    WHERE crc.dr_no_id IN (SELECT dr_no_id FROM GivenCrimeIncidents)
+      AND crc.crm_cd_2_id IS NOT NULL
+
+    UNION ALL
+
+    SELECT 
+        crc.crm_cd_3_id AS crime_code
+    FROM crime_app_api_crimereportcode crc
+    WHERE crc.dr_no_id IN (SELECT dr_no_id FROM GivenCrimeIncidents)
+      AND crc.crm_cd_3_id IS NOT NULL
+
+    UNION ALL
+
+    SELECT 
+        crc.crm_cd_4_id AS crime_code
+    FROM crime_app_api_crimereportcode crc
+    WHERE crc.dr_no_id IN (SELECT dr_no_id FROM GivenCrimeIncidents)
+      AND crc.crm_cd_4_id IS NOT NULL
+),
+
+CrimeCounts AS (
+    SELECT 
+        crime_code, 
+        COUNT(*) AS co_occurrence_count
+    FROM CoOccurringCrimes
+    GROUP BY crime_code
+)
+
+SELECT 
+    cc_counts.crime_code,
+    cc.crm_cd_desc AS crime_description
+FROM CrimeCounts cc_counts
+JOIN crime_app_api_crimecode cc ON cc_counts.crime_code = cc.crm_cd
+ORDER BY cc_counts.co_occurrence_count DESC
+LIMIT 1;
+
+
+/////////////////////////////////////////////////////////// query 9
+
+WITH AgeGroups AS (
+    SELECT 
+        v.vict_age,
+        CASE
+            WHEN v.vict_age >= 0 THEN (v.vict_age / 5) * 5
+        END AS age_group_start,
+        CASE
+            WHEN v.vict_age >= 0 THEN ((v.vict_age / 5) * 5) + 4
+        END AS age_group_end,
+        cr.weapon_id AS weapon_id
+    FROM crime_app_api_victim v
+    JOIN crime_app_api_crimereport cr ON v.victim_id = cr.victim_id
+),
+
+WeaponUsage AS (
+    SELECT 
+        age_group_start,
+        age_group_end,
+        w.weapon_desc AS weapon_description,
+        COUNT(*) AS weapon_count
+    FROM AgeGroups ag
+    JOIN crime_app_api_weapon w ON ag.weapon_id = w.weapon_used_cd
+    GROUP BY age_group_start, age_group_end, w.weapon_desc
+),
+
+MostCommonWeapon AS (
+    SELECT 
+        age_group_start,
+        age_group_end,
+        weapon_description,
+        weapon_count,
+        RANK() OVER (PARTITION BY age_group_start, age_group_end ORDER BY weapon_count DESC) AS rank
+    FROM WeaponUsage
+)
+
+SELECT 
+    age_group_start,
+    age_group_end,
+    weapon_description,
+    weapon_count
+FROM MostCommonWeapon
+WHERE rank = 1
+ORDER BY age_group_start;
+
+
+/////////////////////////////////////////////////////////query 10
+//////////////////////////////////// AREA NAME
+
+WITH CrimeOccurrences AS (
+    SELECT
+        cr.area_id AS area_id,
+        a.area_name,
+        cd.date_occ AS crime_date
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_area a ON cr.area_id = a.area_id
+    WHERE
+        crc.crm_cd_1_id = '354' OR
+        crc.crm_cd_2_id = '354' OR
+        crc.crm_cd_3_id = '354' OR
+        crc.crm_cd_4_id = '354'
+    ORDER BY cr.area_id, cd.date_occ
+),
+
+TimeGaps AS (
+    SELECT
+        area_id,
+        area_name,
+        LAG(crime_date) OVER (PARTITION BY area_id ORDER BY crime_date) AS prev_crime_date,
+        crime_date AS current_crime_date
+    FROM CrimeOccurrences
+),
+
+GapDurations AS (
+    SELECT
+        area_id,
+        area_name,
+        prev_crime_date,
+        current_crime_date,
+        current_crime_date - prev_crime_date AS gap_duration
+    FROM TimeGaps
+    WHERE prev_crime_date IS NOT NULL
+),
+
+MaxGapPerArea AS (
+    SELECT
+        area_id,
+        area_name,
+        prev_crime_date AS gap_start,
+        current_crime_date AS gap_end,
+        gap_duration,
+        RANK() OVER (PARTITION BY area_id ORDER BY gap_duration DESC) AS area_rank
+    FROM GapDurations
+)
+
+SELECT
+    area_name,
+    gap_start,
+    gap_end,
+    gap_duration
+FROM MaxGapPerArea
+WHERE area_rank = 1
+ORDER BY gap_duration DESC
+LIMIT 1;
+	
+
+/////////////////////////////////////// Rpt_Dist_No
+
+WITH CrimeOccurrences AS (
+    SELECT
+        cr.report_dist_id AS report_dist_id,
+        rd.rpt_dist_no,
+        a.area_name,
+        cd.date_occ AS crime_date
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    JOIN crime_app_api_reportdistrict rd ON cr.report_dist_id = rd.report_dist_id
+    JOIN crime_app_api_area a ON rd.area_id = a.area_id
+    WHERE
+        crc.crm_cd_1_id = '330' OR
+        crc.crm_cd_2_id = '330' OR
+        crc.crm_cd_3_id = '330' OR
+        crc.crm_cd_4_id = '330'
+    ORDER BY rd.rpt_dist_no, cd.date_occ
+),
+
+TimeGaps AS (
+    SELECT
+        report_dist_id,
+        rpt_dist_no,
+        area_name,
+        LAG(crime_date) OVER (PARTITION BY report_dist_id ORDER BY crime_date) AS prev_crime_date,
+        crime_date AS current_crime_date
+    FROM CrimeOccurrences
+),
+
+GapDurations AS (
+    SELECT
+        report_dist_id,
+        rpt_dist_no,
+        area_name,
+        prev_crime_date,
+        current_crime_date,
+        current_crime_date - prev_crime_date AS gap_duration
+    FROM TimeGaps
+    WHERE prev_crime_date IS NOT NULL
+),
+
+MaxGapPerDistrict AS (
+    SELECT
+        report_dist_id,
+        rpt_dist_no,
+        area_name,
+        prev_crime_date AS gap_start,
+        current_crime_date AS gap_end,
+        gap_duration,
+        RANK() OVER (PARTITION BY report_dist_id ORDER BY gap_duration DESC) AS district_rank
+    FROM GapDurations
+)
+
+SELECT
+    rpt_dist_no AS reported_district_number,
+    area_name,
+    gap_start,
+    gap_end,
+    gap_duration
+FROM MaxGapPerDistrict
+WHERE district_rank = 1
+ORDER BY gap_duration DESC
+LIMIT 1;
+
+
+//////////////////////////////////////////////////////// query 11
+
+WITH CrimeOccurrences AS (
+    SELECT 
+        a.area_name,
+        cd.date_rptd AS date_reported,
+        crc.crm_cd_1_id AS crime_code,
+        COUNT(cr.dr_no_id) AS report_count
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    JOIN crime_app_api_area a ON cr.area_id = a.area_id
+    WHERE crc.crm_cd_1_id IN ('812', '812')
+    GROUP BY a.area_name, cd.date_rptd, crc.crm_cd_1_id
+),
+
+CrimePairOccurrences AS (
+    SELECT
+        c1.area_name,
+        c1.date_reported,
+        c1.report_count AS crime_1_count,
+        c2.report_count AS crime_2_count
+    FROM CrimeOccurrences c1
+    JOIN CrimeOccurrences c2 
+        ON c1.area_name = c2.area_name
+        AND c1.date_reported = c2.date_reported
+        AND c1.crime_code = '812'
+        AND c2.crime_code = '812'
+    WHERE c1.report_count > 1 AND c2.report_count > 1
+)
+
+SELECT 
+    area_name,
+    date_reported,
+    crime_1_count,
+    crime_2_count
+FROM CrimePairOccurrences
+ORDER BY area_name, date_reported;
+
+
+/////////////////////////////////////////////////////// query 12
+
+WITH CrimeOccurrences AS (
+    SELECT 
+        cr.dr_no_id,
+        cd.date_rptd AS report_date,
+        a.area_name,
+        w.weapon_desc
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    JOIN crime_app_api_area a ON cr.area_id = a.area_id
+    JOIN crime_app_api_weapon w ON cr.weapon_id = w.weapon_used_cd
+    WHERE cd.time_occ BETWEEN '00:00:00' AND '00:01:00'
+),
+
+WeaponsUsedInMultipleAreas AS (
+    SELECT 
+        report_date,
+        weapon_desc
+    FROM CrimeOccurrences
+    GROUP BY report_date, weapon_desc
+    HAVING COUNT(DISTINCT area_name) > 1
+)
+
+SELECT 
+    cr.dr_no_id AS division_of_records_number
+FROM CrimeOccurrences cr
+JOIN WeaponsUsedInMultipleAreas wm ON 
+    cr.report_date = wm.report_date AND 
+    cr.weapon_desc = wm.weapon_desc;
+
+
+
+///////////////////////////////////////////////////// query 13
+
+WITH OccurrenceGroups AS (
+    SELECT
+        cr.area_id AS area_id,
+        cd.date_occ,
+        cr.weapon_id AS weapon_id,
+        crc.crm_cd_1_id AS crm_cd,
+        COUNT(*) AS occurrence_count
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    WHERE cd.time_occ BETWEEN '00:00:00' AND '05:00:00'
+    GROUP BY cr.area_id, cd.date_occ, cr.weapon_id, crc.crm_cd_1_id
+    HAVING 
+    COUNT(*) = 2
+),   
+
+FilteredReports AS (
+    SELECT
+        cr.dr_no_id,
+        cr.area_id AS area_id,
+        cd.date_occ,
+        cd.time_occ,
+        cr.weapon_id AS weapon_id,
+        crc.crm_cd_1_id AS crm_cd
+    FROM crime_app_api_crimereport cr
+    JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+    JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+    JOIN OccurrenceGroups og ON
+        cr.area_id = og.area_id AND
+        cd.date_occ = og.date_occ AND
+        cr.weapon_id = og.weapon_id AND
+        crc.crm_cd_1_id = og.crm_cd
+    WHERE cd.time_occ BETWEEN '00:00:00' AND '05:00:00'
+)
+
+SELECT
+    a.area_name,
+    cd.date_occ AS date_occurred,
+    cc.crm_cd_desc AS crime_description,
+    w.weapon_desc AS weapon_description,
+    STRING_AGG(fr.dr_no_id::text, ', ') AS list_division_record_number
+FROM FilteredReports fr
+JOIN crime_app_api_area a ON fr.area_id = a.area_id
+JOIN crime_app_api_crimedate cd ON fr.dr_no_id = cd.dr_no_id
+JOIN crime_app_api_crimecode cc ON fr.crm_cd = cc.crm_cd
+JOIN crime_app_api_weapon w ON fr.weapon_id = w.weapon_used_cd
+GROUP BY a.area_name, cd.date_occ, cc.crm_cd_desc, w.weapon_desc
+ORDER BY a.area_name, cd.date_occ, cc.crm_cd_desc, w.weapon_desc;
+
+
+////////////////////////////////////////////////// query 14
+
+SELECT
+    cr.dr_no_id AS division_of_records_number
+FROM
+    crime_app_api_crimereport cr
+WHERE
+    cr.area_id = '1'
+
+
+///////////////////////////////////////////////// query 15 
+
+SELECT
+    cr.dr_no_id AS  division_of_records_number,
+    cd.date_rptd AS date_reported,
+    cd.date_occ AS date_occurred,
+    cd.time_occ AS time_occurred,
+    cr.area_id AS area_id,
+    a.area_name AS area_name,
+    rd.rpt_dist_no AS reported_district_number,
+    crc.crm_cd_1_id AS crime_code_1,
+    cc1.crm_cd_desc AS crime_code_description_1,
+    crc.crm_cd_2_id AS crime_code_2,
+    cc2.crm_cd_desc AS crime_code_description_2,
+    crc.crm_cd_3_id AS crime_code_3,
+    cc3.crm_cd_desc AS crime_code_description_3,
+    crc.crm_cd_4_id AS crime_code_4,
+    cc4.crm_cd_desc AS crime_code_description_4,
+    mo.mocodes AS mocodes,
+    v.vict_age AS victim_age,
+    v.vict_sex AS victim_sex,
+    v.vict_descent AS victim_descent,
+    p.premis_cd AS premis_code,
+    p.premis_desc AS premis_description,
+    w.weapon_used_cd AS weapon_used_code,
+    w.weapon_desc AS weapon_description,
+    s.status_cd AS status,
+    s.status_desc AS status_desc_description,
+    l.street_address AS location,
+    l.cross_street AS cross_street,
+    l.lat AS latitude,
+    l.lon AS longitude
+FROM
+    crime_app_api_crimereport cr
+LEFT JOIN crime_app_api_crimedate cd ON cr.dr_no_id = cd.dr_no_id
+LEFT JOIN crime_app_api_area a ON cr.area_id = a.area_id
+LEFT JOIN crime_app_api_reportdistrict rd ON cr.report_dist_id = rd.report_dist_id
+LEFT JOIN crime_app_api_crimereportcode crc ON cr.dr_no_id = crc.dr_no_id
+LEFT JOIN crime_app_api_crimecode cc1 ON crc.crm_cd_1_id = cc1.crm_cd
+LEFT JOIN crime_app_api_crimecode cc2 ON crc.crm_cd_2_id = cc2.crm_cd
+LEFT JOIN crime_app_api_crimecode cc3 ON crc.crm_cd_3_id = cc3.crm_cd
+LEFT JOIN crime_app_api_crimecode cc4 ON crc.crm_cd_4_id = cc4.crm_cd
+LEFT JOIN crime_app_api_modusoperandi mo ON cr.mo_code_id = mo.mo_code_id
+LEFT JOIN crime_app_api_victim v ON cr.victim_id = v.victim_id
+LEFT JOIN crime_app_api_premises p ON cr.premise_id = p.premis_cd
+LEFT JOIN crime_app_api_weapon w ON cr.weapon_id = w.weapon_used_cd
+LEFT JOIN crime_app_api_status s ON cr.status_id = s.status_cd
+LEFT JOIN crime_app_api_location l ON cr.location_id = l.location_id
+WHERE
+    cr.dr_no_id = '231505624';
