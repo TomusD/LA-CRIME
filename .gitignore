@@ -161,3 +161,20 @@ cython_debug/
 Crime_Data_from_2020_to_Present_20241025.csv
 Crime_Data_from_2020_to_Present_20241025_clean.csv
 data_test.py
+
+# React Frontend Specific
+node_modules/
+build/
+dist/
+
+# Explicitly allow tracking of React source files
+!frontend/app/
+
+# CSV Files (adjust or document as needed)
+Crime_Data_from_2020_to_Present_20241025.csv
+Crime_Data_from_2020_to_Present_20241025_clean.csv
+
+# Python Environment
+.env
+.venv
+
