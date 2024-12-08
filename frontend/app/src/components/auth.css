@@ -1,0 +1,72 @@
+/* Container for the form */
+.auth-form-container {
+    width: 300px;
+    margin: 50px auto; /* Centers the form on the page */
+    padding: 20px;
+    border: 1px solid #ccc; /* Light gray border */
+    border-radius: 5px;
+    background-color: #f9f9f9; /* Light background color */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  }
+  
+  /* Form heading */
+  .auth-form-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  /* Labels */
+  .auth-form-container label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  /* Input fields */
+  .auth-form-container input[type="text"],
+  .auth-form-container input[type="email"],
+  .auth-form-container input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box; /* Ensures padding doesn't affect total width */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  /* Submit button */
+  .auth-form-container button[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .auth-form-container button[type="submit"]:hover {
+    background-color: #45a049; /* Darker green on hover */
+  }
+  
+  /* Error message */
+  .auth-form-container .error-message {
+    color: red;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  
+  /* Link to switch between login and register */
+  .auth-form-container .switch-link {
+    text-align: center;
+    margin-top: 15px;
+  }
+  
+  .auth-form-container .switch-link a {
+    color: #007BFF; /* Bootstrap primary blue */
+    text-decoration: none;
+  }
+  
+  .auth-form-container .switch-link a:hover {
+    text-decoration: underline;
+  }

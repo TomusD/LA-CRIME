@@ -1,0 +1,92 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  
+  .App h1 {
+    color: #333;
+  }
+  
+  label {
+    margin-right: 10px;
+  }
+  
+  select {
+    padding: 5px;
+  }
+  
+  h2 {
+    margin-top: 20px;
+  }
+  
+  pre {
+    background-color: #f0f0f0;
+    padding: 15px;
+  }
+
+  input[type='time'] {
+    margin-left: 5px;
+    padding: 5px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  th {
+    background-color: #f2f2f2;
+    text-align: left;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+  
+  tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  h2 {
+    margin-top: 20px;
+  }
+  
+  p {
+    font-size: 16px;
+  }
+
+
+.form-container {
+  display: block; 
+  text-align: left; 
+}
+
+.form-container label {
+  display: block; 
+  margin-bottom: 10px; 
+  font-weight: bold; 
+}
+
+.form-container input,
+.form-container select {
+  display: block; 
+  margin-top: 5px; 
+}
+
+
+.p-dropdown-panel {
+  background-color: white !important;
+  border: 1px solid #ccc;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+}
+
+.p-dropdown-item {
+  color: black; 
+}
